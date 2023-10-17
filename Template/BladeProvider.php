@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\View\Engines\CompilerEngine;
 use Illuminate\View\ViewServiceProvider;
 
 /**
@@ -14,8 +15,8 @@ use Illuminate\View\ViewServiceProvider;
 class BladeProvider extends ViewServiceProvider
 {
     /**
-     * @param  ContainerContract  $container
-     * @param  array  $config
+     * @param ContainerContract $container
+     * @param array             $config
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function __construct(ContainerContract $container = null, $config = [])
@@ -35,7 +36,11 @@ class BladeProvider extends ViewServiceProvider
     {
         $this->registerFilesystem();
         $this->registerEvents();
-        parent::register();
+        $this->registerEngineResolver();
+        $this->registerViewFinder();
+        $this->registerFactory();
+        $this->registerBladeCompiler();
+        return $this;
     }
 
     /**
@@ -44,6 +49,7 @@ class BladeProvider extends ViewServiceProvider
     public function registerFilesystem()
     {
         $this->app->bindIf('files', Filesystem::class, true);
+        return $this;
     }
 
     /**
@@ -52,6 +58,7 @@ class BladeProvider extends ViewServiceProvider
     public function registerEvents()
     {
         $this->app->bindIf('events', Dispatcher::class, true);
+        return $this;
     }
 
     /**
@@ -65,8 +72,39 @@ class BladeProvider extends ViewServiceProvider
             $namespaces = $config['view.namespaces'];
             $finder = new FileViewFinder($app['files'], $paths);
             array_map([$finder, 'addNamespace'], array_keys($namespaces), $namespaces);
-
             return $finder;
         }, true);
+        return $this;
+    }
+
+    /**
+     * Register the view environment.
+     *
+     * @return void
+     */
+    public function registerFactory()
+    {
+        $this->app->singleton('view', function ($app) {
+            $resolver = $app['view.engine.resolver'];
+            $finder = $app['view.finder'];
+            $factory = $this->createFactory($resolver, $finder, $app['events']);
+            $factory->setContainer($app);
+            $factory->share('app', $app);
+            return $factory;
+        });
+    }
+
+    /**
+     * Register the Blade engine implementation.
+     *
+     * @param  \Illuminate\View\Engines\EngineResolver  $resolver
+     * @return void
+     */
+    public function registerBladeEngine($resolver)
+    {
+        $resolver->register('blade', function () {
+            $compiler = new CompilerEngine($this->app['blade.compiler'], $this->app['files']);
+            return $compiler;
+        });
     }
 }

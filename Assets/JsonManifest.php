@@ -18,8 +18,8 @@ class JsonManifest implements ManifestInterface
     /**
      * JsonManifest constructor
      *
-     * @param  string  $manifestPath  Local filesystem path to JSON-encoded manifest
-     * @param  string  $distUri  Remote URI to assets root
+     * @param string $manifestPath Local filesystem path to JSON-encoded manifest
+     * @param string $distUri Remote URI to assets root
      */
     public function __construct($manifestPath, $distUri)
     {
@@ -27,12 +27,14 @@ class JsonManifest implements ManifestInterface
         $this->dist = $distUri;
     }
 
-    public function get($asset): string
+    /** @inheritdoc */
+    public function get($asset)
     {
         return isset($this->manifest[$asset]) ? $this->manifest[$asset] : $asset;
     }
 
-    public function getUri($asset): string
+    /** @inheritdoc */
+    public function getUri($asset)
     {
         return "{$this->dist}/{$this->get($asset)}";
     }

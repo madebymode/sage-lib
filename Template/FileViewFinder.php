@@ -12,7 +12,7 @@ class FileViewFinder extends \Illuminate\View\FileViewFinder
      * @param  string  $name
      * @return array
      */
-    public function getPossibleViewFiles($name): array
+    public function getPossibleViewFiles($name)
     {
         $parts = explode(self::FALLBACK_PARTS_DELIMITER, $name);
         $templates[] = array_shift($parts);
@@ -20,7 +20,6 @@ class FileViewFinder extends \Illuminate\View\FileViewFinder
             $templates[] = $templates[$i].self::FALLBACK_PARTS_DELIMITER.$part;
         }
         rsort($templates);
-
         return $this->getPossibleViewFilesFromTemplates($templates);
     }
 
@@ -30,7 +29,7 @@ class FileViewFinder extends \Illuminate\View\FileViewFinder
      * @param array $templates
      * @return array
      */
-    public function getPossibleViewFilesFromTemplates($templates): array
+    public function getPossibleViewFilesFromTemplates($templates)
     {
         return call_user_func_array('array_merge', array_map(function ($template) {
             return array_map(function ($extension) use ($template) {
